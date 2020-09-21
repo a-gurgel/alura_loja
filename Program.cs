@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,28 @@ namespace Alura.Loja.Testes.ConsoleApp
     {
 
         static void Main(string[] args)
+        {
+            using (var contexto2 = new LojaContext())
+            {
+                var serviceProvider = contexto2.GetInfrastructure<IServiceProvider>();
+                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+                loggerFactory.AddProvider(SqlLoggerProvider.Create());
+
+                var promocao = contexto2
+                    .Promocoes
+                    .Include(p => p.Produtos)
+                    .ThenInclude(pp => pp.Produto)
+                    .FirstOrDefault();
+
+                Console.WriteLine("\nMotrando os produtos da promoção...");
+                foreach (var item in promocao.Produtos)
+                {
+                    Console.WriteLine(item.Produto);
+                }
+            }
+        }
+
+        private static void IncluirPromocao()
         {
             using (var contexto = new LojaContext())
             {
@@ -41,16 +64,6 @@ namespace Alura.Loja.Testes.ConsoleApp
                 ExibeEntries(contexto.ChangeTracker.Entries());
 
                 contexto.SaveChanges();
-            }
-
-            using(var contexto2 = new LojaContext())
-            {
-                var promocao = contexto2.Promocoes.FirstOrDefault();
-                Console.WriteLine("\nMontando os produtos da promoção...");
-                foreach(var item in promocao.Produtos)
-                {
-                    Console.WriteLine(item.Produto);
-                }
             }
         }
 
