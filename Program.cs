@@ -16,6 +16,42 @@ namespace Alura.Loja.Testes.ConsoleApp
 
         static void Main(string[] args)
         {
+            using (var contexto = new LojaContext())
+            {
+                var serviceProvider = contexto.GetInfrastructure<IServiceProvider>();
+                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+                loggerFactory.AddProvider(SqlLoggerProvider.Create());
+
+                var cliente = contexto
+                    .Clientes
+                    .Include(c => c.EnderecoDeEntrega)
+                    .FirstOrDefault();
+
+                Console.WriteLine($"Endereço de entrega:  {cliente.EnderecoDeEntrega.Logradouro}");
+
+                var produto = contexto
+                    .Produtos
+                    .Include(p => p.Compras)
+                    .Where(p => p.Id == 2020)
+                    .FirstOrDefault();
+
+                contexto.Entry(produto)
+                    .Collection(p => p.Compras)
+                    .Query()
+                    .Where(c => c.Preco > 10)
+                    .Load();
+
+                Console.WriteLine($"Mostrando as compras do produto {produto.Nome}");
+
+                foreach (var item in produto.Compras)
+                {
+                    Console.WriteLine(item);
+                }
+            }
+        }
+
+        private static void ExibeProdutosDaPromocao()
+        {
             using (var contexto2 = new LojaContext())
             {
                 var serviceProvider = contexto2.GetInfrastructure<IServiceProvider>();
@@ -56,7 +92,7 @@ namespace Alura.Loja.Testes.ConsoleApp
 
                 foreach (var item in produtos)
                 {
-                    promocao.IncluirProduto(item);
+                    promocao.IncluiProduto(item);
                 }
 
                 contexto.Promocoes.Add(promocao);
@@ -65,6 +101,7 @@ namespace Alura.Loja.Testes.ConsoleApp
 
                 contexto.SaveChanges();
             }
+
         }
 
         private static void UmParaUm()
@@ -83,6 +120,10 @@ namespace Alura.Loja.Testes.ConsoleApp
 
             using (var contexto = new LojaContext())
             {
+                var serviceProvider = contexto.GetInfrastructure<IServiceProvider>();
+                var loggerFactory = serviceProvider.GetService<ILoggerFactory>();
+                loggerFactory.AddProvider(SqlLoggerProvider.Create());
+
                 contexto.Clientes.Add(fulano);
                 contexto.SaveChanges();
 
@@ -100,9 +141,9 @@ namespace Alura.Loja.Testes.ConsoleApp
             promocaoDePascoa.DataInicio = DateTime.Now;
             promocaoDePascoa.DataTermino = DateTime.Now.AddMonths(3);
 
-            promocaoDePascoa.IncluirProduto(p1);
-            promocaoDePascoa.IncluirProduto(p2);
-            promocaoDePascoa.IncluirProduto(p3);
+            promocaoDePascoa.IncluiProduto(p1);
+            promocaoDePascoa.IncluiProduto(p2);
+            promocaoDePascoa.IncluiProduto(p3);
 
             using (var contexto = new LojaContext())
             {
